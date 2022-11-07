@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stddef.h>
 
 enum TYPE {
 		T_A=1, T_NS=2, T_MD=3, T_MF=4, T_CNAME=5, T_SOA=6,
@@ -56,14 +57,16 @@ typedef struct dns_header{
 
 typedef struct dns_packet{
 	dns_header_t header;
-	dns_question_t *questions;
-	dns_answer_t *answers;
-	dns_answer_t *authorities;
-	dns_answer_t *additional;
+	dns_question_t **questions;
+	dns_answer_t **answers;
+	dns_answer_t **authorities;
+	dns_answer_t **additional;
 } dns_packet_t;
 
-dns_question_t *parse_question(void *data);
-dns_answer_t *parse_answer(void *data);
+int parse_question(void *,int, dns_question_t *);
+int parse_answer(void *, int, dns_answer_t *);
 dns_packet_t *parse_packet(void *data, int n);
-size_t length_of_question(dns_question_t *question);
+
+char *domainname_ptr_to_string(void *packet_start, int ptr);
+int domainname_to_string(void *packet_start, int offset, char *output);
 
