@@ -1,8 +1,19 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include "dns.h"
+
+char *domainname_ptr_to_string(void *packet_start, int ptr);
+int domainname_to_string(void *packet_start, int offset, char *output);
+char *characterstring_to_cstring(void *string);
 
 /**
 Parses the data from a packet that is n bytes long
@@ -241,6 +252,42 @@ int parse_answer(void *packet_start, int offset, dns_answer_t *answer){
 	return length + 10 + answer->RDLength;
 }
 
+void print_packet(dns_packet_t *packet){
+	printf("DNS PACKET ID %x\n", packet->header.QID);
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+	printf("Questions: %d\n", packet->header.QDCount);
+	printf("Answers: %d\n", packet->header.ANCount);
+	printf("Authorities: %d\n", packet->header.NSCount);
+	printf("Additional: %d\n", packet->header.ARCount);
+	printf("~~~~~~~~~~~~~~\n");
+
+	for(int i = 0; i < packet->header.QDCount; i++){
+		print_question(packet->questions[i]);
+	}
+
+	for(int i = 0; i < packet->header.ANCount; i++){
+		print_rr(packet->answers[i]);
+	}
+	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
+}
+
+void print_question(dns_question_t *question){
+	printf("QUESTION: \n");
+	printf("Name: %s\n", question->QName);
+	printf("Type: %d\n", question->QType);
+	printf("Class: %d\n", question->QClass);
+}
+
+void print_rr(dns_answer_t *rr){
+	printf("RESOURCE RECORD:\n");
+	printf("Name: %s\n", rr->Name);
+	printf("Type: %d\n", rr->Type);
+	printf("Class: %d\n", rr->Class);
+	printf("TTL: %d seconds\n", rr->TTL);
+	printf("Data Length, %d\n", rr->RDLength);
+	printf("Data: %s\n", (char *)rr->RData);
+}
+
 char *data="\x01\x02\x58\x8a\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f";
 char *real="\xc4\x6b\x01\x00\x00\x01" \
 "\x00\x00\x00\x00\x00\x00\x03\x64\x6e\x73\x06\x67\x6f\x6f\x67\x6c" \
@@ -255,7 +302,3 @@ char *test="\xb6\x36\x81\x80\x00\x01\x00\x04\x00\x00\x00\x00\x07\x70\x61\x67" \
 "\xd9\x00\x04\x4a\x7d\xe1\x3a\xc0\x3b\x00\x01\x00\x01\x00\x00\x00" \
 "\xd9\x00\x04\x4a\x7d\xe1\x39";
 
-int main(){
-	parse_packet(test, 135);
-	return 0;
-}

@@ -63,10 +63,11 @@ typedef struct dns_packet{
 	dns_answer_t **additional;
 } dns_packet_t;
 
+dns_packet_t *parse_packet(void *data, int n);
 int parse_question(void *,int, dns_question_t *);
 int parse_answer(void *, int, dns_answer_t *);
-dns_packet_t *parse_packet(void *data, int n);
 
-char *domainname_ptr_to_string(void *packet_start, int ptr);
-int domainname_to_string(void *packet_start, int offset, char *output);
+void print_packet(dns_packet_t *packet);
+void print_question(dns_question_t *question);
+void print_rr(dns_answer_t *rr);
 
