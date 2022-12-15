@@ -51,13 +51,14 @@ dns_packet_t *parse_packet(void *data, int n){
 		packet->questions[i] = question;
 	}
 
-	packet->answers = malloc(packet->header.ANCount * sizeof(dns_answer_t));
+	packet->answers = malloc(packet->header.ANCount * sizeof(dns_resource_record_t));
 
 	for(int i = 0; i < packet->header.ANCount; i ++){
-		dns_answer_t *answer = malloc(sizeof(dns_answer_t));
-		read_bytes += parse_answer(data, read_bytes, answer);//TODO check return
+		dns_resource_record_t *answer = malloc(sizeof(dns_resource_record_t));
+		read_bytes += parse_resource_record(data, read_bytes, answer);//TODO check return
 		packet->answers[i] = answer;
 	}
+	//TODO add NS/AR parsing
 
 	return packet;
 }
@@ -233,23 +234,23 @@ int parse_question(void *packet_start, int offset, dns_question_t *question){
 
  returns the number of bytes read.
 */
-int parse_answer(void *packet_start, int offset, dns_answer_t *answer){
-	if(answer == NULL){
+int parse_resource_record(void *packet_start, int offset, dns_resource_record_t *rr){
+	if(rr == NULL){
 		return -1; // TODO failure mode
 	}
 
 	void *data = packet_start+offset;
 
-	int length = domainname_to_string(packet_start, offset, answer->Name);
+	int length = domainname_to_string(packet_start, offset, rr->Name);
 //TODO Check return
-	answer->Type = ntohs(((uint16_t *)(data + length))[0]);
-	answer->Class = ntohs(((uint16_t *)(data + length))[1]);
-	answer->TTL = ntohl(((uint32_t *)(data + length))[1]);
-	answer->RDLength = ntohs(((uint16_t *)(data + length))[4]);
-	answer->RData = malloc(sizeof(char) * answer->RDLength);
+	rr->Type = ntohs(((uint16_t *)(data + length))[0]);
+	rr->Class = ntohs(((uint16_t *)(data + length))[1]);
+	rr->TTL = ntohl(((uint32_t *)(data + length))[1]);
+	rr->RDLength = ntohs(((uint16_t *)(data + length))[4]);
+	rr->RData = malloc(sizeof(char) * rr->RDLength);
 	//TODO check malloc
-	memcpy(answer->RData, data+length+10, answer->RDLength);
-	return length + 10 + answer->RDLength;
+	memcpy(rr->RData, data+length+10, rr->RDLength);
+	return length + 10 + rr->RDLength;
 }
 
 void print_packet(dns_packet_t *packet){
@@ -278,7 +279,7 @@ void print_question(dns_question_t *question){
 	printf("Class: %d\n", question->QClass);
 }
 
-void print_rr(dns_answer_t *rr){
+void print_rr(dns_resource_record_t *rr){
 	printf("RESOURCE RECORD:\n");
 	printf("Name: %s\n", rr->Name);
 	printf("Type: %d\n", rr->Type);

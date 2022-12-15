@@ -11,7 +11,9 @@
 
 #include "dns.h"
 
+#define DNS_ADDRESS "127.0.0.53"
 #define DNS_PORT 53
+
 //Number of slots in our buffer.
 #define BUFFER_SIZE 10
 
@@ -64,7 +66,6 @@ void *listener_thread(void *arg){
 
 	char buf[512];
 	while(1){
-		printf("Listening\n");
 
 		struct sockaddr_in *client_addr = malloc(sizeof(struct sockaddr_in));
 		unsigned int client_addr_len = sizeof(&client_addr);
@@ -74,13 +75,12 @@ void *listener_thread(void *arg){
 			return NULL;
 		}
 
-		printf("Received message from IP: %s and port: %i\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
+//		printf("Received message from IP: %s and port: %i\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 		print_packet(parse_packet(buf,bytes));
 
 		//now we poll semaphore
 		sem_wait(&empty);
 		pthread_mutex_lock(&messages_lock);
-		printf("saving message\n");
 		
 		for(int i = 0; i < BUFFER_SIZE; i ++){
 			int off = (buffer_offset + i) % BUFFER_SIZE;
@@ -93,7 +93,6 @@ void *listener_thread(void *arg){
 				break;
 			}
 		}
-		printf("done saving message, posting\n");
 		pthread_mutex_unlock(&messages_lock);
 		sem_post(&full);
 
@@ -103,11 +102,11 @@ void *listener_thread(void *arg){
 void *resolver_thread(void *arg){
 	int buffer_offset = 0; // mimics offset in listener so we can chase them.
 	while(1){
-		printf("Waiting for message\n");
+
 		sem_wait(&full);
 		pthread_mutex_lock(&messages_lock);
+
 		//only do one message per loop.
-		printf("Got message\n");
 		for(int i = 0; i < BUFFER_SIZE; i ++){
 			int off = (buffer_offset + i) % BUFFER_SIZE;
 			if(message_buffer[off].used == true){
@@ -221,7 +220,7 @@ int main(int argc, char **argv){
 	//setup the dns_server address.
 	dns_addr.sin_family = AF_INET;
 	dns_addr.sin_port = htons(DNS_PORT);
-	inet_pton(AF_INET, "127.0.0.53", &(dns_addr.sin_addr));
+	inet_pton(AF_INET, DNS_ADDRESS, &(dns_addr.sin_addr));
 	dns_struct_length = sizeof(dns_addr);
 
 	//listen

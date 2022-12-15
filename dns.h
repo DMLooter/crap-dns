@@ -30,14 +30,14 @@ typedef struct dns_question{
 	uint16_t QClass;
 }dns_question_t;
 
-typedef struct dns_answer{
+typedef struct dns_resource_record{
 	char Name[256];
 	uint16_t Type;
 	uint16_t Class;
 	uint32_t TTL;
 	uint16_t RDLength;
 	void* RData;
-} dns_answer_t;
+} dns_resource_record_t;
 
 typedef struct dns_header{
 	uint16_t QID;
@@ -58,16 +58,16 @@ typedef struct dns_header{
 typedef struct dns_packet{
 	dns_header_t header;
 	dns_question_t **questions;
-	dns_answer_t **answers;
-	dns_answer_t **authorities;
-	dns_answer_t **additional;
+	dns_resource_record_t **answers;
+	dns_resource_record_t **authorities;
+	dns_resource_record_t **additional;
 } dns_packet_t;
 
 dns_packet_t *parse_packet(void *data, int n);
 int parse_question(void *,int, dns_question_t *);
-int parse_answer(void *, int, dns_answer_t *);
+int parse_resource_record(void *, int, dns_resource_record_t *);
 
 void print_packet(dns_packet_t *packet);
 void print_question(dns_question_t *question);
-void print_rr(dns_answer_t *rr);
+void print_rr(dns_resource_record_t *rr);
 
