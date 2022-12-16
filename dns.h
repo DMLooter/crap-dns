@@ -1,3 +1,6 @@
+#ifndef DNS_H
+#define DNS_H
+
 #include <stdint.h>
 #include <stddef.h>
 
@@ -71,3 +74,4 @@ void print_packet(dns_packet_t *packet);
 void print_question(dns_question_t *question);
 void print_rr(dns_resource_record_t *rr);
 
+#endif

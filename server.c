@@ -10,6 +10,7 @@
 #include <semaphore.h>
 
 #include "dns.h"
+#include "storage.h"
 
 #define DNS_ADDRESS "127.0.0.53"
 #define DNS_PORT 53
@@ -77,7 +78,7 @@ void *listener_thread(void *arg){
 
 //		printf("Received message from IP: %s and port: %i\n", inet_ntoa(client_addr->sin_addr), ntohs(client_addr->sin_port));
 		print_packet(parse_packet(buf,bytes));
-
+		
 		//now we poll semaphore
 		sem_wait(&empty);
 		pthread_mutex_lock(&messages_lock);
@@ -115,6 +116,9 @@ void *resolver_thread(void *arg){
 				// if it comes from our resolver we need to use it to respond to a message
 				if(cmp_addr(message_buffer[off].sa, (struct sockaddr *)&dns_addr) == 0){
 					dns_packet_t *response = parse_packet(message_buffer[off].message, message_buffer[off].message_length);
+					if(response->header.ANCount > 0){
+						insert_record(response->answers[0]);
+					}
 
 					pthread_mutex_lock(&requests_lock);
 					for(int j = 0; j < BUFFER_SIZE; j++){
@@ -180,6 +184,8 @@ void *resolver_thread(void *arg){
 }
 
 int main(int argc, char **argv){
+	init_cache();
+
 	// 0 out our buffer.
 	memset(request_buffer,0,BUFFER_SIZE * sizeof(dns_message_t));
 	sem_init(&empty, 0, BUFFER_SIZE);

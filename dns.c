@@ -106,7 +106,7 @@ char *domainname_ptr_to_string(void *packet_start, int ptr){
 				free(out);
 				return NULL; //todo figure out what error this should be
 			}
-			strncpy(nextout, labels, strlen(labels)+1); //TODO make this bounds check
+			strncpy(nextout, labels, strlen(labels)); //TODO make this bounds check
 			free(labels);
 
 			return out; // todo, have this check for pointers and not fail.
@@ -132,7 +132,7 @@ char *domainname_ptr_to_string(void *packet_start, int ptr){
 		//TODO check if over 255 and return error?
 		free(label);
 	}
-	nextout[-1] = '\0'; //override last dot with NULL
+	nextout[0] = '\0'; //dont override last dot with NULL
 	return out;
 
 	//length of each label in dns is len +1 for length
@@ -169,7 +169,7 @@ int domainname_to_string(void *packet_start, int offset, char *output){
 			if(labels == NULL){
 				return -1; //todo figure out what error this should be
 			}
-			strncpy(nextout, labels, strlen(labels)+1); //TODO make this bounds check
+			strncpy(nextout, labels, strlen(labels)); //TODO make this bounds check
 			free(labels);
 			len +=2;
 			
@@ -196,7 +196,7 @@ int domainname_to_string(void *packet_start, int offset, char *output){
 		//TODO check if over 255 and return error?
 		free(label);
 	}
-	nextout[-1] = '\0'; //override last dot with NULL
+	nextout[0] = '\0'; //dont override last dot with NULL
 	return len;
 
 	//length of each label in dns is len +1 for length

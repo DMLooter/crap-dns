@@ -4,7 +4,7 @@ TARGET = dns
 LIBS = -pthread
 
 HEADERS = dns.h
-OBJECTS = dns.o server.o
+OBJECTS = dns.o server.o storage.o
 
 default: $(TARGET)
 
