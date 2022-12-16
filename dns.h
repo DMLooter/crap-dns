@@ -7,7 +7,7 @@
 enum TYPE {
 		T_A=1, T_NS=2, T_MD=3, T_MF=4, T_CNAME=5, T_SOA=6,
 			T_MB=7, T_MG=8, T_MR=9, T_NULL=10, T_WKS=11,
-			T_PTR=12, T_HINFO=13, T_MINFO=14, T_MX=15, T_TXT=16
+			T_PTR=12, T_HINFO=13, T_MINFO=14, T_MX=15, T_TXT=16, T_OPT=41
 };
 
 enum QTYPE {

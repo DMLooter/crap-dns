@@ -18,8 +18,9 @@ typedef struct dns_domain{
 } dns_domain_t;
 
 int init_cache();
+void cache_all(dns_packet_t *);
 int insert_record(dns_resource_record_t *);
-dns_domain_t *create_domain(dns_domain_t *, char *);
+dns_domain_t *find_domain(char *);
 void print_domain(dns_domain_t *);
 
 #endif

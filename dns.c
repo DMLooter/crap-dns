@@ -58,7 +58,22 @@ dns_packet_t *parse_packet(void *data, int n){
 		read_bytes += parse_resource_record(data, read_bytes, answer);//TODO check return
 		packet->answers[i] = answer;
 	}
-	//TODO add NS/AR parsing
+
+	packet->authorities = malloc(packet->header.NSCount * sizeof(dns_resource_record_t));
+
+	for(int i = 0; i < packet->header.NSCount; i ++){
+		dns_resource_record_t *authority = malloc(sizeof(dns_resource_record_t));
+		read_bytes += parse_resource_record(data, read_bytes, authority);//TODO check return
+		packet->authorities[i] = authority;
+	}
+
+	packet->additional = malloc(packet->header.ARCount * sizeof(dns_resource_record_t));
+
+	for(int i = 0; i < packet->header.ARCount; i ++){
+		dns_resource_record_t *additional = malloc(sizeof(dns_resource_record_t));
+		read_bytes += parse_resource_record(data, read_bytes, additional);//TODO check return
+		packet->additional[i] = additional;
+	}
 
 	return packet;
 }
@@ -268,6 +283,15 @@ void print_packet(dns_packet_t *packet){
 
 	for(int i = 0; i < packet->header.ANCount; i++){
 		print_rr(packet->answers[i]);
+	}
+
+	printf("Authority Section:\n");
+	for(int i = 0; i < packet->header.NSCount; i++){
+		print_rr(packet->authorities[i]);
+	}
+	printf("Additional Section:\n");
+	for(int i = 0; i < packet->header.ARCount; i++){
+		print_rr(packet->additional[i]);
 	}
 	printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n");
 }

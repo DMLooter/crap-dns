@@ -6,6 +6,7 @@
 
 #define CACHE_SIZE 1000
 
+dns_domain_t *create_domain(dns_domain_t *, char *);
 void print_all(dns_domain_t *);
 
 // The super root is the root of the cache
@@ -52,6 +53,24 @@ int init_cache(){
 	return 0;
 }
 
+/**
+ * Caches all of the RR in a particular packet.
+*/
+void cache_all(dns_packet_t *packet){
+	//TODO make this better, group domains before insertion.
+	for(int i = 0; i < packet->header.ANCount; i++){
+		insert_record(packet->answers[i]);
+	}
+	for(int i = 0; i < packet->header.NSCount; i++){
+		insert_record(packet->authorities[i]);
+	}
+	for(int i = 0; i < packet->header.ARCount; i++){
+		if(packet->additional[i]->Type == T_OPT){
+			continue; // dont cache OPT pseudo records.
+		}
+		insert_record(packet->additional[i]);
+	}
+}
 int insert_record(dns_resource_record_t *rr){
 	printf("NAME: %s\n", rr->Name);
 	dns_domain_t *current = super_root;
@@ -85,14 +104,22 @@ int insert_record(dns_resource_record_t *rr){
 			}
 		}
 	}
-	
-	current->record_no += 1;
-	current->records = realloc(current->records, current->record_no*sizeof(dns_resource_record_t *));
-	//TODO check if this fails.
+	if(rr->Type == T_NS){
+		current->ns_record_no += 1;
+		current->ns_records = realloc(current->ns_records, current->ns_record_no*sizeof(dns_resource_record_t *));
+		//TODO check if this fails.
 
-	//TODO Make this a deep copy
-	current->records[current->record_no-1] = rr;
-	print_all(super_root);
+		//TODO Make this a deep copy
+		current->ns_records[current->record_no-1] = rr;
+	}else{
+		current->record_no += 1;
+		current->records = realloc(current->records, current->record_no*sizeof(dns_resource_record_t *));
+		//TODO check if this fails.
+
+		//TODO Make this a deep copy
+		current->records[current->record_no-1] = rr;
+	}
+	//print_all(super_root);
 	return 0;
 }
 
@@ -122,6 +149,45 @@ dns_domain_t *create_domain(dns_domain_t *parent, char *label){
 	parent->domains[parent->domain_no-1] = domain;
 
 	return domain;
+}
+
+
+
+/*
+Attempts to find a domain in the cache with the specified domain name.
+Returns NULL if the domain is not cached.
+*/
+dns_domain_t *find_domain(char *domainname){
+	printf("NAME: %s\n", domainname);
+	dns_domain_t *current = super_root;
+	
+	char label[64];
+
+	int start = strlen(domainname);
+	int end = start;
+	while(start >= 0){
+		while(domainname[start] != '.' && start >= 0){
+			start--;
+		}
+		strncpy(label, domainname+start+1, end-start);
+		label[end-start-1] = '\0';
+		end = start;
+		start--;
+
+		bool found = false;
+		for(int i = 0; i < current->domain_no; i++){
+			if(strcmp(current->domains[i]->label, label) == 0){
+				current = current->domains[i];
+				found = true;
+				break;
+			}
+		}
+		if(!found){
+			return NULL;
+		}
+	}
+
+	return current;
 }
 
 void print_domain(dns_domain_t *domain){
